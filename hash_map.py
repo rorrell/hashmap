@@ -139,9 +139,7 @@ class HashMap:
         """
         bucket = self.get_bucket_by_key(key)
         node = bucket.contains(key)
-        if node is None:
-            return None
-        return node.value
+        return node if node is None else node.value
 
     def resize_table(self, capacity):
         """
