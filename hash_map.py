@@ -63,6 +63,8 @@ class LinkedList:
                 cur = cur.next
         return None
 
+    def is_empty(self):
+        return self.head is None
 
     def __str__(self):
         out = '['
@@ -109,18 +111,23 @@ class HashMap:
         self._hash_function = function
         self.size = 0
 
-    def apply_hash_func(self, val):
-        result = self._hash_function(val)
-        if result > self.capacity:
-            return result % self.capacity
-        return result
+    def get_bucket_by_key(self, key):
+        """
+        Determines the appropriate bucket for a given key
+        :param key: The value that gets hashed to determine the bucket
+        :return: The linked list for the appropriate bucket
+        """
+        hash_result = self._hash_function(key)
+        if hash_result > self.capacity:  # if the result is outside the array capacity, fit it to the array size
+            hash_result %= self.capacity
+        return self._buckets[hash_result]
 
     def clear(self):
         """
         Empties out the hash table deleting all links in the hash table.
         """
         for bucket in self._buckets:
-            bucket.head = None
+            bucket.head = None  # cut off all data from each linked list
 
     def get(self, key):
         """
@@ -154,13 +161,15 @@ class HashMap:
             NOTE: the value is expected to be the same for every link in the same bucket, but the key will be different;
                 therefore, updating the value makes no sense
         """
-        hashed = self.apply_hash_func(key)
-        bucket = self._buckets[hashed]
+        # find the appropriate bucket
+        bucket = self.get_bucket_by_key(key)
+
+        # determine whether the key exists in the bucket
         node = bucket.contains(key)
-        if node is None:
+        if node is None:  # if not, add at front
             bucket.add_front(key, value)
             self.size += 1
-        else:
+        else:  # if so, update the value
             node.value = value
 
     def remove(self, key):
@@ -188,9 +197,10 @@ class HashMap:
         Returns:
             The number of empty buckets in the table
         """
+        # go through the buckets and count the empty ones
         num_empty = 0
         for bucket in self._buckets:
-            if bucket.head is None:
+            if bucket.is_empty():
                 num_empty += 1
         return num_empty
 
