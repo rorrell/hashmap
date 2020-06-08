@@ -63,6 +63,7 @@ class LinkedList:
                 cur = cur.next
         return None
 
+
     def __str__(self):
         out = '['
         if self.head != None:
@@ -108,11 +109,18 @@ class HashMap:
         self._hash_function = function
         self.size = 0
 
+    def apply_hash_func(self, val):
+        result = self._hash_function(val)
+        if result > self.capacity:
+            return result % self.capacity
+        return result
+
     def clear(self):
         """
         Empties out the hash table deleting all links in the hash table.
         """
-        # FIXME: Write this function
+        for bucket in self._buckets:
+            bucket.head = None
 
     def get(self, key):
         """
@@ -143,8 +151,17 @@ class HashMap:
         Args:
             key: they key to use to has the entry
             value: the value associated with the entry
+            NOTE: the value is expected to be the same for every link in the same bucket, but the key will be different;
+                therefore, updating the value makes no sense
         """
-        # FIXME: Write this function
+        hashed = self.apply_hash_func(key)
+        bucket = self._buckets[hashed]
+        node = bucket.contains(key)
+        if node is None:
+            bucket.add_front(key, value)
+            self.size += 1
+        else:
+            node.value = value
 
     def remove(self, key):
         """
@@ -171,7 +188,11 @@ class HashMap:
         Returns:
             The number of empty buckets in the table
         """
-        # FIXME: Write this function
+        num_empty = 0
+        for bucket in self._buckets:
+            if bucket.head is None:
+                num_empty += 1
+        return num_empty
 
     def table_load(self):
         """
@@ -179,7 +200,7 @@ class HashMap:
             the ratio of (number of links) / (number of buckets) in the table as a float.
 
         """
-        # FIXME: Write this function
+        return float(self.size) / float(self.capacity)  # forcing a float return type
 
     def __str__(self):
         """
