@@ -137,7 +137,11 @@ class HashMap:
         Return:
             The value associated to the key. None if the link isn't found.
         """
-        # FIXME: Write this function
+        bucket = self.get_bucket_by_key(key)
+        node = bucket.contains(key)
+        if node is None:
+            return None
+        return node.value
 
     def resize_table(self, capacity):
         """
