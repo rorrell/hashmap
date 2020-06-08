@@ -182,7 +182,12 @@ class HashMap:
         Args:
             key: they key to search for and remove along with its value
         """
-        # FIXME: Write this function
+        # find the appropriate bucket
+        bucket = self.get_bucket_by_key(key)
+
+        # remove the given key if it is present
+        bucket.remove(key)  # returns True or False, but no need to return that to caller of this method
+
 
     def contains_key(self, key):
         """
