@@ -13,6 +13,21 @@ class SLNode:
         return '(' + str(self.key) + ', ' + str(self.value) + ')'
 
 
+class LinkedListIterator:
+    def __init__(self, linked_list):
+        self._linked_list = linked_list
+        self._index = 0
+        self._cur = self._linked_list.head
+
+    def __next__(self):
+        if self._cur is None:
+            raise StopIteration
+        result = self._cur
+        self._index += 1
+        self._cur = self._cur.next
+        return result
+
+
 class LinkedList:
     def __init__(self):
         self.head = None
@@ -66,6 +81,9 @@ class LinkedList:
     def is_empty(self):
         return self.head is None
 
+    def __iter__(self):
+        return LinkedListIterator(self)
+
     def __str__(self):
         out = '['
         if self.head != None:
@@ -111,15 +129,30 @@ class HashMap:
         self._hash_function = function
         self.size = 0
 
-    def get_bucket_by_key(self, key):
+    def get_bucket_index_by_key(self, key, capacity=None):
         """
         Determines the appropriate bucket for a given key
+        :param capacity: the capacity of array that the hashed key will be fit to.  defaults to None, in which case it
+            will be set to self.capacity
         :param key: The value that gets hashed to determine the bucket
         :return: The linked list for the appropriate bucket
         """
+        if capacity is None:
+            capacity = self.capacity
         hash_result = self._hash_function(key)
-        if hash_result > self.capacity:  # if the result is outside the array capacity, fit it to the array size
-            hash_result %= self.capacity
+        if hash_result > capacity - 1:  # if the result is outside the array capacity, fit it to the array size
+            hash_result %= capacity
+        return hash_result
+
+    def get_bucket_by_key(self, key):
+        """
+        Determines the appropriate bucket for a given key
+        :param capacity: the capacity of array that the hashed key will be fit to.  defaults to None, in which case it
+            will be set to self.capacity
+        :param key: The value that gets hashed to determine the bucket
+        :return: The linked list for the appropriate bucket
+        """
+        hash_result = self.get_bucket_index_by_key(key)
         return self._buckets[hash_result]
 
     def clear(self):
@@ -148,7 +181,19 @@ class HashMap:
         Args:
             capacity: the new number of buckets.
         """
-        # FIXME: Write this function
+        # create a new set of buckets
+        new_table = []
+        for i in range(capacity):
+            new_table.append(LinkedList())
+
+        for bucket in self._buckets:
+            for node in bucket:
+                # rehash each node based on the new capacity
+                new_bucket_index = self.get_bucket_index_by_key(node.key, capacity)
+                new_table[new_bucket_index].add_front(node.key, node.value)
+        # assign the new bucket list and new capacity to self
+        self._buckets = new_table
+        self.capacity = capacity
 
     def put(self, key, value):
         """
@@ -197,7 +242,11 @@ class HashMap:
             True if the key is found False otherwise
 
         """
-        # FIXME: Write this function
+        # check each bucket for the key until it is found or until the whole thing has been searched
+        for bucket in self._buckets:
+            if bucket.contains(key):
+                return True
+        return False
 
     def empty_buckets(self):
         """
