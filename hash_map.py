@@ -129,7 +129,17 @@ class HashMap:
         self._hash_function = function
         self.size = 0
 
-    def get_bucket_index_by_key(self, key, capacity=None):
+    def get_bucket_by_index(self, index):
+        """
+        Retrieve a bucket by its index
+        :param index: The desired bucket's index
+        :return: The associated bucket, if it exists, else None
+        """
+        if index < 0 or index > self.capacity - 1:
+            return None
+        return self._buckets[index]
+
+    def get_bucket_index_by_key(self, key: any, capacity: any = None) -> int:
         """
         Determines the appropriate bucket for a given key
         :param capacity: the capacity of array that the hashed key will be fit to.  defaults to None, in which case it
@@ -139,16 +149,14 @@ class HashMap:
         """
         if capacity is None:
             capacity = self.capacity
-        hash_result = self._hash_function(key)
+        hash_result = self._hash_function(str(key))
         if hash_result > capacity - 1:  # if the result is outside the array capacity, fit it to the array size
             hash_result %= capacity
         return hash_result
 
-    def get_bucket_by_key(self, key):
+    def get_bucket_by_key(self, key: any) -> LinkedList:
         """
         Determines the appropriate bucket for a given key
-        :param capacity: the capacity of array that the hashed key will be fit to.  defaults to None, in which case it
-            will be set to self.capacity
         :param key: The value that gets hashed to determine the bucket
         :return: The linked list for the appropriate bucket
         """
@@ -162,15 +170,16 @@ class HashMap:
         for bucket in self._buckets:
             bucket.head = None  # cut off all data from each linked list
 
-    def get(self, key):
+    def get(self, key, valToHash=None):
         """
         Returns the value with the given key.
         Args:
             key: the value of the key to look for
+            :param valToHash: provides the value to hash to determine the bucket, if different from the key
         Return:
             The value associated to the key. None if the link isn't found.
         """
-        bucket = self.get_bucket_by_key(key)
+        bucket = self.get_bucket_by_key(key if valToHash is None else valToHash)
         node = bucket.contains(key)
         return node if node is None else node.value
 
@@ -195,7 +204,7 @@ class HashMap:
         self._buckets = new_table
         self.capacity = capacity
 
-    def put(self, key, value):
+    def put(self, key, value, useValueToDetermineBucket=False):
         """
         Updates the given key-value pair in the hash table. If a link with the given
         key already exists, this will just update the value and skip traversing. Otherwise,
@@ -203,13 +212,13 @@ class HashMap:
         bucket's linked list.
 
         Args:
-            key: they key to use to has the entry
-            value: the value associated with the entry
-            NOTE: the value is expected to be the same for every link in the same bucket, but the key will be different;
-                therefore, updating the value makes no sense
+            :param key: they key to use to has the entry
+            :param value: the value associated with the entry
+            :param useValueToDetermineBucket: set this to True if you want to hash the value instead of the key when
+                determining the bucket to use.  Defaults to False.
         """
         # find the appropriate bucket
-        bucket = self.get_bucket_by_key(key)
+        bucket = self.get_bucket_by_key(key if not useValueToDetermineBucket else value)
 
         # determine whether the key exists in the bucket
         node = bucket.contains(key)
@@ -219,22 +228,23 @@ class HashMap:
         else:  # if so, update the value
             node.value = value
 
-    def remove(self, key):
+    def remove(self, key, valToHash=None):
         """
         Removes and frees the link with the given key from the table. If no such link
         exists, this does nothing. Remember to search the entire linked list at the
         bucket.
         Args:
-            key: they key to search for and remove along with its value
+            :param key: they key to search for and remove along with its value
+            :param valToHash: the value to hash to determine the bucket from which to remove; defaults to None, which
+                will just hash the key parameter.
         """
         # find the appropriate bucket
-        bucket = self.get_bucket_by_key(key)
+        bucket = self.get_bucket_by_key(key if valToHash is None else valToHash)
 
         # remove the given key if it is present
         bucket.remove(key)  # returns True or False, but no need to return that to caller of this method
 
-
-    def contains_key(self, key):
+    def contains_key(self, key: any) -> bool:
         """
         Searches to see if a key exists within the hash table
 
